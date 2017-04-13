@@ -7,4 +7,3 @@ install:
 
 script:
   - make
-  - make test

@@ -19,8 +19,8 @@ var (
 
 func init() {
 	flag.StringVar(&command, "c", "", "full command with arguments, e.g \"ifconfig -a\"")
-	flag.IntVar(&procNum, "n", 2, "the number of processes to run, default is 2")
-	flag.BoolVar(&suppress, "s", false, "suppress the stdout/stderr from process")
+	flag.IntVar(&procNum, "n", 2, "the number of processes to run")
+	flag.BoolVar(&suppress, "s", false, "suppress outputs from process")
 }
 
 func main() {
