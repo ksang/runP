@@ -101,8 +101,16 @@ func (m *Manager) PrintResult() {
 	if !m.arg.Suppress {
 		for i, r := range m.results {
 			m.PrintSepLine()
-			fmt.Printf("Process %d:\nStdout:\n%s\nStderr:\n%s\nError:\n%v\n",
-				r.ProcessID, r.Stdout, r.Stderr, r.Error)
+			fmt.Printf("Process %d:\n",r.ProcessID)
+            if len(r.Stdout) > 0 {
+                fmt.Printf("Stdout:\n%s\n", r.Stdout)
+            }
+            if len(r.Stderr) > 0 {
+                fmt.Printf("Stderr:\n%s\n", r.Stderr)
+            }
+            if r.Error != nil {
+                fmt.Printf("Error:\n%s\n", r.Error.Error())
+            }
 			if i == len(m.results)-1 {
 				m.PrintSepLine()
 			}
