@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Manager is runP controller for all the runP tasks
 type Manager struct {
 	arg     Arg
 	readyCh chan struct{}
@@ -19,6 +20,7 @@ type Manager struct {
 	results []Result
 }
 
+// Result is the metadata for each sub process
 type Result struct {
 	ProcessID   int
 	Stdout      string
@@ -27,12 +29,14 @@ type Result struct {
 	ElapsedTime time.Duration
 }
 
+// New a runP manager with arguments provided
 func New(arg Arg) *Manager {
 	return &Manager{
 		arg: arg,
 	}
 }
 
+// Start the manager and run sub processses
 func (m *Manager) Start() error {
 	rc := make(chan struct{}, m.arg.ProcNum)
 	kc := make(chan struct{}, m.arg.ProcNum)
@@ -60,6 +64,7 @@ func (m *Manager) Start() error {
 	return nil
 }
 
+// RunProc run one process according to Manager config
 func (m *Manager) RunProc(n int) {
 	defer m.wg.Done()
 	var (
@@ -97,22 +102,23 @@ func (m *Manager) RunProc(n int) {
 	m.rMu.Unlock()
 }
 
+// PrintResult prints process outputs and timing information
 func (m *Manager) PrintResult() {
 	if !m.arg.Suppress {
 		for i, r := range m.results {
-			m.PrintSepLine()
-			fmt.Printf("Process %d:\n",r.ProcessID)
-            if len(r.Stdout) > 0 {
-                fmt.Printf("Stdout:\n%s\n", r.Stdout)
-            }
-            if len(r.Stderr) > 0 {
-                fmt.Printf("Stderr:\n%s\n", r.Stderr)
-            }
-            if r.Error != nil {
-                fmt.Printf("Error:\n%s\n", r.Error.Error())
-            }
+			m.printSepLine()
+			fmt.Printf("Process %d:\n", r.ProcessID)
+			if len(r.Stdout) > 0 {
+				fmt.Printf("Stdout:\n%s", r.Stdout)
+			}
+			if len(r.Stderr) > 0 {
+				fmt.Printf("Stderr:\n%s", r.Stderr)
+			}
+			if r.Error != nil {
+				fmt.Printf("Error:\n%s\n", r.Error.Error())
+			}
 			if i == len(m.results)-1 {
-				m.PrintSepLine()
+				m.printSepLine()
 			}
 		}
 	}
@@ -121,6 +127,6 @@ func (m *Manager) PrintResult() {
 	}
 }
 
-func (m *Manager) PrintSepLine() {
+func (m *Manager) printSepLine() {
 	fmt.Println("==========================================================")
 }
