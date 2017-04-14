@@ -40,12 +40,9 @@ func New(arg Arg) *Manager {
 
 // Start the manager and run sub processses
 func (m *Manager) Start() error {
-	rc := make(chan struct{}, m.arg.ProcNum)
-	kc := make(chan struct{}, m.arg.ProcNum)
-	qc := make(chan struct{}, m.arg.ProcNum)
-	m.readyCh = rc
-	m.kickCh = kc
-	m.quitCh = qc
+	m.readyCh = make(chan struct{}, m.arg.ProcNum)
+	m.kickCh = make(chan struct{}, m.arg.ProcNum)
+	m.quitCh = make(chan struct{}, m.arg.ProcNum)
 	m.wg.Add(m.arg.ProcNum)
 	for i := 0; i < m.arg.ProcNum; i++ {
 		n := i
@@ -54,7 +51,7 @@ func (m *Manager) Start() error {
 	count := 0
 	for {
 		select {
-		case <-rc:
+		case <-m.readyCh:
 			count++
 		}
 		if count == m.arg.ProcNum {
@@ -62,7 +59,7 @@ func (m *Manager) Start() error {
 		}
 	}
 	for i := 0; i < m.arg.ProcNum; i++ {
-		kc <- struct{}{}
+		m.kickCh <- struct{}{}
 	}
 	m.wg.Wait()
 	return nil
@@ -93,12 +90,6 @@ func (m *Manager) RunProc(n int) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	// process is ready to run
-	m.readyCh <- struct{}{}
-
-	<-m.kickCh
-	start = time.Now()
-
 	go func() {
 		// received quit signal
 		<-m.quitCh
@@ -115,6 +106,12 @@ func (m *Manager) RunProc(n int) {
 		}
 	}()
 
+	// process is ready to run
+	m.readyCh <- struct{}{}
+
+	// process is kicked off
+	<-m.kickCh
+	start = time.Now()
 	err := cmd.Run()
 	res.ElapsedTime = time.Since(start)
 	if err == nil {
