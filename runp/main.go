@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 
 	"github.com/ksang/runP"
 )
@@ -30,12 +32,22 @@ func main() {
 		flag.PrintDefaults()
 		return
 	}
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, os.Interrupt)
+
 	arg := runP.Arg{
 		Command:  command,
 		ProcNum:  procNum,
 		Suppress: suppress,
 	}
 	manager := runP.New(arg)
+
+	go func() {
+		<-sc
+		fmt.Println("Interrupted")
+		manager.Quit()
+	}()
+
 	if err := manager.Start(); err != nil {
 		log.Fatal(err)
 	}

@@ -3,6 +3,7 @@ package runP
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os/exec"
 	"strings"
 	"sync"
@@ -14,10 +15,11 @@ type Manager struct {
 	arg     Arg
 	readyCh chan struct{}
 	kickCh  chan struct{}
+	quitCh  chan struct{}
 	wg      sync.WaitGroup
 
 	rMu     sync.RWMutex
-	results []Result
+	results []*Result
 }
 
 // Result is the metadata for each sub process
@@ -40,8 +42,10 @@ func New(arg Arg) *Manager {
 func (m *Manager) Start() error {
 	rc := make(chan struct{}, m.arg.ProcNum)
 	kc := make(chan struct{}, m.arg.ProcNum)
+	qc := make(chan struct{}, m.arg.ProcNum)
 	m.readyCh = rc
 	m.kickCh = kc
+	m.quitCh = qc
 	m.wg.Add(m.arg.ProcNum)
 	for i := 0; i < m.arg.ProcNum; i++ {
 		n := i
@@ -73,9 +77,15 @@ func (m *Manager) RunProc(n int) {
 		start  time.Time
 	)
 
-	res := Result{
+	res := &Result{
 		ProcessID: n,
 	}
+
+	// append result first, in case sub process hang, still can get it's output
+	// by intrrupting the runP main process
+	m.rMu.Lock()
+	m.results = append(m.results, res)
+	m.rMu.Unlock()
 
 	args := strings.Split(m.arg.Command, " ")
 	cmd := exec.Command(args[0], args[1:]...)
@@ -88,18 +98,30 @@ func (m *Manager) RunProc(n int) {
 
 	<-m.kickCh
 	start = time.Now()
+
+	go func() {
+		// received quit signal
+		<-m.quitCh
+		// if the process is already exited
+		if cmd == nil {
+			return
+		}
+		//res.ElapsedTime = time.Since(start)
+		res.Stdout = stdout.String()
+		res.Stderr = stderr.String()
+		// kill the sub process
+		if err := cmd.Process.Kill(); err != nil {
+			log.Println(err)
+		}
+	}()
+
 	err := cmd.Run()
 	res.ElapsedTime = time.Since(start)
-
 	if err == nil {
 		res.Stdout = stdout.String()
 		res.Stderr = stderr.String()
 	}
 	res.Error = err
-
-	m.rMu.Lock()
-	m.results = append(m.results, res)
-	m.rMu.Unlock()
 }
 
 // PrintResult prints process outputs and timing information
@@ -129,4 +151,11 @@ func (m *Manager) PrintResult() {
 
 func (m *Manager) printSepLine() {
 	fmt.Println("==========================================================")
+}
+
+// Quit signal subprocess goroutinue to quit
+func (m *Manager) Quit() {
+	for i := 0; i < m.arg.ProcNum; i++ {
+		m.quitCh <- struct{}{}
+	}
 }
