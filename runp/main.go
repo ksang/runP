@@ -28,7 +28,7 @@ func init() {
 	flag.IntVar(&procNum, "n", 2, "the number of processes to run")
 	flag.BoolVar(&suppress, "s", false, "suppress outputs from process")
 	flag.StringVar(&env, "e", "",
-		"env to pass to sub-processes, semi-column to divide env entries, pipe to divide different env of sub-processes, e.g: \"PATH=/usr/local;OS=Linux|OS=Darwin\"")
+		"env to pass to sub-processes, semi-column to divide env entries, \n\tpipe to divide different env of sub-processes, \n\te.g: \"PATH=/usr/local;OS=Linux|OS=Darwin\"")
 }
 
 func main() {
