@@ -8,4 +8,6 @@ type Arg struct {
 	ProcNum int
 	// Suppress stdout/stderr from processes
 	Suppress bool
+	// environment varibales
+	Env [][]string
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/ksang/runP"
 )
@@ -17,12 +18,17 @@ var (
 	procNum int
 	// Suppress stdout/stderr from processes
 	suppress bool
+	// environment variables, semi-column to divide env entries,
+	// pipe to devide env to different sub-process
+	env string
 )
 
 func init() {
 	flag.StringVar(&command, "c", "", "full command with arguments, e.g \"ifconfig -a\"")
 	flag.IntVar(&procNum, "n", 2, "the number of processes to run")
 	flag.BoolVar(&suppress, "s", false, "suppress outputs from process")
+	flag.StringVar(&env, "e", "",
+		"env to pass to sub-processes, semi-column to divide env entries, pipe to divide different env of sub-processes, e.g: \"PATH=/usr/local;OS=Linux|OS=Darwin\"")
 }
 
 func main() {
@@ -35,11 +41,20 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, os.Interrupt)
 
+	var e [][]string
+	subpEnv := strings.Split(env, "|")
+
+	for _, s := range subpEnv {
+		e = append(e, strings.Split(s, ";"))
+	}
+
 	arg := runP.Arg{
 		Command:  command,
 		ProcNum:  procNum,
 		Suppress: suppress,
+		Env:      e,
 	}
+
 	manager := runP.New(arg)
 
 	go func() {

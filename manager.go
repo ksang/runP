@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -87,6 +88,10 @@ func (m *Manager) RunProc(n int) {
 	args := strings.Split(m.arg.Command, " ")
 	cmd := exec.Command(args[0], args[1:]...)
 
+	// if there is env arguments passed, append it to env of parent process
+	if len(m.arg.Env) > 0 {
+		cmd.Env = append(os.Environ(), m.arg.Env[n%len(m.arg.Env)]...)
+	}
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 

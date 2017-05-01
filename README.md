@@ -3,13 +3,19 @@
 
 Run any number of processes simultaneously for performance testing
 
-    runp -h
-    Usage of perf_tests/runp:
+### Features
+
+- Precise wall clock time gathering
+- Pass different environment variables
+
+    Usage of ./runp:
       -c string
-            full command with arguments, e.g "ifconfig -a"
+        	full command with arguments, e.g "ifconfig -a"
+      -e string
+        	env to pass to sub-processes, semi-column to divide env entries, pipe to divide different env of sub-processes, e.g: "PATH=/usr/local;OS=Linux|OS=Darwin"
       -n int
-            the number of processes to run (default 2)
-      -s    suppress outputs from process
+        	the number of processes to run (default 2)
+      -s	suppress outputs from process
 
 example
 
