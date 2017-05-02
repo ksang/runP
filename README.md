@@ -6,7 +6,7 @@ Run any number of processes simultaneously for performance testing
 ### Features
 
 - Precise wall clock time gathering
-- Pass different environment variables
+- Independent environment variable injection
 
 ### Usage
 
@@ -21,7 +21,7 @@ Run any number of processes simultaneously for performance testing
         	the number of processes to run (default 2)
       -s	suppress outputs from process
 
-example
+### Example
 
     $./build/runp -c "sleep 5" -n 8 -s
     Process 3:      Elapsed Time: 5.001953797s
